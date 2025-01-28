@@ -1,30 +1,17 @@
-const {DefaultArtifactClient} = require('@actions/artifact');
 const core = require('@actions/core');
 const exec = require('@actions/exec');
 const github = require('@actions/github');
-const glob = require('@actions/glob');
 const lcovTotal = require("lcov-total");
-const os = require('os');
-const path = require('path');
 
 const events = ['pull_request', 'pull_request_target'];
 
 async function run() {
   try {
-    const tmpPath = path.resolve(os.tmpdir(), github.context.action);
-    // See https://github.com/actions/toolkit/tree/main/packages/glob#recommended-action-inputs
-    const globOptions = {
-      followSymbolicLinks: core.getInput('follow-symbolic-links').toUpperCase() !== 'FALSE'
-    }
-    const globber = await glob.create(core.getInput('coverage-files'), globOptions);
-    const coverageFiles = await globber.glob();
     const titlePrefix = core.getInput('title-prefix');
     const additionalMessage = core.getInput('additional-message');
     const updateComment = core.getInput('update-comment') === 'true';
 
-    await genhtml(coverageFiles, tmpPath);
-
-    const coverageFile = await mergeCoverages(coverageFiles, tmpPath);
+    const coverageFile = core.getInput("merged-coverage-file");
     const totalCoverage = lcovTotal(coverageFile);
     const minimumCoverage = core.getInput('minimum-coverage');
     const gitHubToken = core.getInput('github-token').trim();
@@ -102,54 +89,6 @@ async function upsertComment(body, commentHeaderPrefix, octokit) {
 
     await createComment(body, octokit);
   }
-}
-
-async function genhtml(coverageFiles, tmpPath) {
-  const workingDirectory = core.getInput('working-directory').trim() || './';
-  const artifactName = core.getInput('artifact-name').trim();
-  const artifactPath = path.resolve(tmpPath, 'html').trim();
-  const args = [...coverageFiles, '--rc', 'lcov_branch_coverage=1'];
-
-  args.push('--output-directory');
-  args.push(artifactPath);
-
-  await exec.exec('genhtml', args, { cwd: workingDirectory });
-
-  if (artifactName !== '') {
-    const artifact = new DefaultArtifactClient();
-    const globber = await glob.create(`${artifactPath}/**/**.*`);
-    const htmlFiles = await globber.glob();
-
-    core.info(`Uploading artifacts.`);
-
-    await artifact
-      .uploadArtifact(
-        artifactName,
-        htmlFiles,
-        artifactPath,
-      );
-  } else {
-    core.info("Skip uploading artifacts");
-  }
-}
-
-async function mergeCoverages(coverageFiles, tmpPath) {
-  // This is broken for some reason:
-  //const mergedCoverageFile = path.resolve(tmpPath, 'lcov.info');
-  const mergedCoverageFile = tmpPath + '/lcov.info';
-  const args = [];
-
-  for (const coverageFile of coverageFiles) {
-    args.push('--add-tracefile');
-    args.push(coverageFile);
-  }
-
-  args.push('--output-file');
-  args.push(mergedCoverageFile);
-
-  await exec.exec('lcov', [...args, '--rc', 'lcov_branch_coverage=1']);
-
-  return mergedCoverageFile;
 }
 
 async function summarize(coverageFile) {

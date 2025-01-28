@@ -4,12 +4,9 @@ name: 'Report LCOV'
 description: 'Report the code coverage from LCOV files'
 author: 'Zennon Gosalvez'
 inputs:
-  coverage-files:
-    description: 'The coverage files to scan. For example, `coverage/lcov.*.info`'
+  merged-coverage-file:
+    description: 'The coverage file with merged coverage. For example, `_coverage/_coverage_report.dat`'
     required: true
-  follow-symbolic-links:
-    description: 'Indicates whether to follow symbolic links'
-    default: true
   artifact-name:
     description: 'The GitHub artifact name of the generated HTML report. For example, `code-coverage-report`. _Note:_ When downloading, it will be extracted in an `html` directory. Optional. Default: `` (Skips uploading of artifacts)'
   minimum-coverage:
