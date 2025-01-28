@@ -12,8 +12,11 @@ const events = ['pull_request', 'pull_request_target'];
 async function run() {
   try {
     const tmpPath = path.resolve(os.tmpdir(), github.context.action);
-    const coverageFilesPattern = core.getInput('coverage-files');
-    const globber = await glob.create(coverageFilesPattern);
+    // See https://github.com/actions/toolkit/tree/main/packages/glob#recommended-action-inputs
+    const globOptions = {
+      followSymbolicLinks: core.getInput('follow-symbolic-links').toUpperCase() !== 'FALSE'
+    }
+    const globber = await glob.create(core.getInput('coverage-files'), globOptions);
     const coverageFiles = await globber.glob();
     const titlePrefix = core.getInput('title-prefix');
     const additionalMessage = core.getInput('additional-message');

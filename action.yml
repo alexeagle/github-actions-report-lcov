@@ -7,6 +7,9 @@ inputs:
   coverage-files:
     description: 'The coverage files to scan. For example, `coverage/lcov.*.info`'
     required: true
+  follow-symbolic-links:
+    description: 'Indicates whether to follow symbolic links'
+    default: true
   artifact-name:
     description: 'The GitHub artifact name of the generated HTML report. For example, `code-coverage-report`. _Note:_ When downloading, it will be extracted in an `html` directory. Optional. Default: `` (Skips uploading of artifacts)'
   minimum-coverage:
